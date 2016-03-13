@@ -1,0 +1,16 @@
+{
+  "name": "gens2aa",
+  "version": "0.0.1",
+  "description": "A repo for demonstrating the benefits of generators when dealing with messy async code and how generators are a path to async/await.",
+  "main": "app/index.js",
+  "dependencies": {
+    "express": "^4.13.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app/index.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
