@@ -1,0 +1,19 @@
+{
+  "name": "gens2aa",
+  "version": "0.0.1",
+  "description": "A repo for demonstrating the benefits of generators when dealing with messy async code and how generators are a path to async/await.",
+  "main": "app/index.js",
+  "dependencies": {
+    "babel": "^6.5.2",
+    "babel-cli": "^6.6.5",
+    "babel-preset-node5": "^10.8.0",
+    "koa": "^2.0.0-alpha.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node node_modules/babel-cli/bin/babel-node.js app/index.js --presets node5"
+  },
+  "author": "",
+  "license": "MIT"
+}
