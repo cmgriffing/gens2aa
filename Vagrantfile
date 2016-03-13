@@ -4,7 +4,7 @@
 Vagrant.configure(2) do |config|
 
   config.vm.box = "ubuntu/trusty64"
-  config.vm.hostname = “gens2aa.dev"
+  config.vm.hostname = "gens2aa.dev"
   
   config.vm.network "forwarded_port", guest: 3000, host: 80
   config.vm.network :private_network, :auto_network => true
