@@ -48,7 +48,11 @@ Vagrant.configure(2) do |config|
   # Installing local npm dependencies
 
   config.vm.provision :shell, privileged: false, inline: <<-SHELL
-    cd /home/vagrant/Code
+    cd /home/vagrant/Code/express
+    npm install
+    cd /home/vagrant/Code/koa1
+    npm install
+    cd /home/vagrant/Code/koa2
     npm install
   SHELL
 
