@@ -9,20 +9,18 @@ let app = koa()
 console.log('Starting Server...')
 
 // process request (promises)
-app.use(function *(next) {
+app.use(function * (next) {
   let ctx = this
   yield Widgets.createWidgets(20)
     .then(function (widgets) {
       return Gadgets.createGadgetsFromWidgets(widgets)
     }).then(function (gadgets) {
       return Things.createThingsFromGadgets(gadgets)
-    }).then(function (things) {
-      ctx.things = things
+    }).then(function (things) { 
+      ctx.body = {
+        things: things
+      }
     })
-  ctx.set('Content-Type', 'application/json')
-  ctx.body = JSON.stringify({
-    things: ctx.things
-  })
 })
 
 // process request (generators)
@@ -31,10 +29,9 @@ app.use(function * (next) {
   let widgets = yield Widgets.createWidgets(20)
   let gadgets = yield Gadgets.createGadgetsFromWidgets(widgets)
   let things = yield Things.createThingsFromGadgets(gadgets)
-  ctx.set('Content-Type', 'application/json')
-  ctx.body = JSON.stringify({
+  ctx.body = {
     things: things
-  })
+  }
 })
 
 console.log('Listening on 127.0.0.1:3000')
