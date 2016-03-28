@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+
+        <title>Generators, Async/Await, and Koa.js</title>
+
+        <meta name="description" content="Taming promise chains and easy migrations for the future.">
+        <meta name="author" content="Chris Griffing">
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+        <!-- Code syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+        <style>
+
+            pre.half {
+                width: 49%;
+                display: inline-block;
+                vertical-align: top;
+            }
+
+        </style>
+
+        <!--[if lt IE 9]>
+        <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+
+    <body>
+
+        <div class="reveal">
+
+            <!-- Any section element inside of this container is displayed as a slide -->
+            <div class="slides">
+                
+                <section>
+                    <h1>Generators, Async/Await, and Koa.js</h1>
+                    <h3>Taming promise chains and easy migrations for the future</h3>
+                    <p>
+                        <small>by <a href="http://chrisgriffing.com">Chris Griffing</a></small>
+                    </p>
+                </section>
+
+                <section>
+                    <h2>Long Promise Chains</h2>
+                    <pre><code>
+Widgets.createWidgets(20)
+  .then(function (widgets) {
+    return Gadgets.createGadgetsFromWidgets(widgets)
+  }).then(function (gadgets) {
+    return Things.createThingsFromGadgets(gadgets)
+  }).then(function (things) {
+    res.set('Content-Type', 'application/json')
+    res.send(JSON.stringify(things))
+  })
+                    </code></pre>
+                    <p>A bit messy but much better than nested callbacks.</p>
+                </section>
+                
+                <section>
+                    <h2>Generators</h2>
+                    <pre class="half"><code>
+function * evenNumbers(stop) {
+  for(var i = 1; true; i++) {
+    if(i % 2 === 0) {
+      yield i
+    }
+  }
+}
+                    </code></pre>
+                    <pre class="half"><code>
+> x = evenNumbers()
+  evenNumbers {[[GeneratorStatus]]: "suspended", [[GeneratorReceiver]]: Window}
+> x.next()
+  Object {value: 2, done: false}
+> x.next()
+  Object {value: 4, done: false}
+> x.next()
+  Object {value: 6, done: false}
+> x.next()
+  Object {value: 8, done: false}
+> x.next()
+  Object {value: 10, done: false}
+                    </code></pre>
+                    <p></p>
+                    <script>
+                        function * evenNumbers() {
+                            for(var i = 1; true; i++) {
+                                if(i % 2 === 0) {
+                                    yield i
+                                }
+                            }
+                        }
+                    </script>
+                </section>
+                
+                <section>
+                    <h2>Generators (stoppable)</h2>
+                    <pre class="half">Definition:<code>
+function * evenNumbersStoppable(stop) {
+  for(var i = 1; true; i++) {
+    if(i % 2 === 0) {
+      var stop = yield i
+      if(stop === true) {
+        return i
+      }
+    }
+  }
+}
+                    </code></pre>
+                    <pre class="half">Output:<code>
+> y = evenNumbersStoppable()
+  evenNumbersStoppable {[[GeneratorStatus]]: "suspended", [[GeneratorReceiver]]: Window}
+> y.next()
+  Object {value: 2, done: false}
+> y.next()
+  Object {value: 4, done: false}
+> y.next()
+  Object {value: 6, done: false}
+> y.next()
+  Object {value: 8, done: false}
+> y.next(true)
+  Object {value: 8, done: true}
+> y.next()
+  Object {value: undefined, done: true}
+> y.next()
+  Object {value: undefined, done: true}
+                    </code></pre>
+                    <p>To stop a generator, return a value instead of yielding it.</p>
+                    <script>
+                        function * evenNumbersStoppable() {
+                            for(var i = 1; true; i++) {
+                                if(i % 2 === 0) {
+                                    var stop = yield i
+                                    if(stop === true) {
+                                        return i
+                                    }
+                                }
+                            }
+                        }
+                    </script>
+                </section>
+
+                <section>
+                    <h2>Generators (throwing)</h2>
+                    <pre class=""><code>
+> x = evenNumbersStoppable()
+  evenNumbersStoppable {[[GeneratorStatus]]: "suspended", [[GeneratorReceiver]]: Window}
+> x.next()
+  Object {value: 2, done: false}
+> x.next()
+  Object {value: 4, done: false}
+> x.throw(new Error('Something has gone terribly wrong here'))
+  Uncaught Error: Something has gone terribly wrong here(…)(anonymous function) @ VM6460:2InjectedScript._evaluateOn @ (program):878InjectedScript._evaluateAndWrap @ (program):811InjectedScript.evaluate @ (program):667
+> x.next()
+  Object {value: undefined, done: true}
+                    </code></pre>
+                    <p>Generators have a built in function for throwing errors and stopping itself.</p>
+                </section>
+
+                <section>
+                    <h2>Generators (wrapping promises)</h2>
+                    <pre><code>
+function async(makeGenerator){
+  return function () {
+    var generator = makeGenerator.apply(this, arguments)
+
+    function handle(result){
+      // result => { done: [Boolean], value: [Object] }
+      if (result.done) return Promise.resolve(result.value)
+
+      return Promise.resolve(result.value).then(function (res){
+        return handle(generator.next(res))
+      }, function (err){
+        return handle(generator.throw(err))
+      });
+    }
+
+    try {
+      return handle(generator.next())
+    } catch (ex) {
+      return Promise.reject(ex)
+    }
+  }
+}
+                    </code></pre>
+                    <p>This wrapper allows us to yield the result of a promise or handle the error of it with a try/catch.</p>
+                </section>
+
+                <section>
+                    <h2>Generators (wrapping promises): examples</h2>
+                    <pre>A Sequence of Operations:<code>
+var get = async(function *(){
+  var left = yield readJSON('left.json')
+  var right = yield readJSON('right.json')
+  return {left: left, right: right}
+})
+                    </code></pre>
+                    <pre>Parallel Operations:<code>
+var get = async(function *(){
+  var left = readJSON('left.json')
+  var right = readJSON('right.json')
+  return {left: yield left, right: yield right}
+})
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Async/Await</h2>
+                    <ul>
+                        <li>Uses wrapped generators for promise-based control flow.</li>
+                        <li>Originally slated as a feature for ES2016, but was delayed.</li>
+                        <li>Currently at Stage-3 of spec approval. Already supported by Chakra, so only one other vendor needs to support it to get it to Stage-4.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Async/Await: examples</h2>
+                    <pre>A Sequence of Operations:<code>
+var get = async function (){
+  var left = await readJSON('left.json')
+  var right = await readJSON('right.json')
+  return {left: left, right: right}
+}
+                    </code></pre>
+                    <pre>Parallel Operations:<code>
+var get = async function (){
+  var left = readJSON('left.json')
+  var right = readJSON('right.json')
+  return {left: await left, right: await right}
+}
+                    </code></pre>
+                    <p>Looking similar? There is a reason.</p>
+                </section>
+
+                <section>
+                    <h2>What about Koa?</h2>
+                    <ul>
+                        <li>Originally made by TJ Hollowaychuk</li>
+                        <li>Middleware is already wrapped to support easy promise-based generator flows.</li>
+                        <li>Koa2 beta is stable, ready, and waiting for async/await support in Node.</li>
+                    </ul>
+                </section>
+
+
+                <section>
+                    <h2>Migrating: From Express to Koa</h2>
+                    <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-1.png" />
+                    <p>Convert a normal middleware function to a generator.</p>
+                </section>
+                <section>
+                    <h2>Migrating: From then to yield</h2>
+                    <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-2.png" />
+                    <p>Looking much cleaner.</p>
+                </section>
+                <section>
+                    <h2>Migrating: From yield to await</h2>
+                    <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-3.png" />
+                    <p>So Simple.</p>
+                </section>
+
+                <section>
+                    <h2>Caveat</h2>
+                    <ul>
+                        <li>Unable to be optimized by compiler.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Citations and Further Reading</h2>
+                    <ul>
+                        <li>
+                            Generators - Forbes Lindesay 
+                            <a href="https://www.promisejs.org/generators/">https://www.promisejs.org/generators/</a>
+                        </li>
+                        <li>
+                            Async/Await - Eddit Zaneski 
+                            <a href="https://www.twilio.com/blog/2015/10/asyncawait-the-hero-javascript-deserved.html">https://www.twilio.com/blog/2015/10/asyncawait-the-hero-javascript-deserved.html</a>
+                        </li>
+                        <li>
+                            ES7 Async/Await - Ross Boucher
+                            <a href="http://rossboucher.com/await/#/">http://rossboucher.com/await/#/</a>
+                        </li>
+                    </ul>
+                </section>
+
+            </div>
+
+
+
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+
+            // Full list of configuration options available at:
+            // https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                controls: true,
+                progress: true,
+                history: true,
+                center: true,
+
+                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+                // Optional reveal.js plugins
+                dependencies: [
+                    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                    { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/zoom-js/zoom.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true }
+                ]
+            });
+
+        </script>
+
+    </body>
+</html>
