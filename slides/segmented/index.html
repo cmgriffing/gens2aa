@@ -78,7 +78,7 @@ Widgets.createWidgets(20)
                 <section>
                     <h2>Generators</h2>
                     <pre class="half"><code>
-function * evenNumbers(stop) {
+function * evenNumbers() {
   for(var i = 1; true; i++) {
     if(i % 2 === 0) {
       yield i
@@ -115,7 +115,7 @@ function * evenNumbers(stop) {
                 <section>
                     <h2>Generators (stoppable)</h2>
                     <pre class="half">Definition:<code>
-function * evenNumbersStoppable(stop) {
+function * evenNumbersStoppable() {
   for(var i = 1; true; i++) {
     if(i % 2 === 0) {
       var stop = yield i
