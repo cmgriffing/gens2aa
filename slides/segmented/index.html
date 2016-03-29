@@ -15,7 +15,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
 
         <link rel="stylesheet" href="css/reveal.css">
-        <link rel="stylesheet" href="css/theme/black.css" id="theme">
+        <link rel="stylesheet" href="css/theme/night.css" id="theme">
 
         <!-- Code syntax highlighting -->
         <link rel="stylesheet" href="lib/css/zenburn.css">
@@ -73,6 +73,9 @@ Widgets.createWidgets(20)
   })
                     </code></pre>
                     <p>A bit messy but much better than nested callbacks.</p>
+                    <aside class="notes">
+                        These are the contents of a simple Express endpoint. Here, we use promises to prevent "callback hell". This should be familiar to most developers and it really is much better than nested callbacks. However, this type of async flow control can be made even cleaner using generators on top of promises.
+                    </aside>
                 </section>
                 
                 <section>
@@ -100,7 +103,6 @@ function * evenNumbers() {
 > x.next()
   Object {value: 10, done: false}
                     </code></pre>
-                    <p></p>
                     <script>
                         function * evenNumbers() {
                             for(var i = 1; true; i++) {
@@ -110,6 +112,9 @@ function * evenNumbers() {
                             }
                         }
                     </script>
+                    <aside class="notes">
+                        So, first we must become familiar with generators. Here, we see a generator in its natural environment. They are very good at dealing with sequences of data or events. If you look closely, you see that we have an unbounded for loop, which ends up not being an issue because of how the generator handles the flow.
+                    </aside>
                 </section>
                 
                 <section>
@@ -157,6 +162,9 @@ function * evenNumbersStoppable() {
                             }
                         }
                     </script>
+                    <aside class="notes">
+                        Now we see how a generator can be stopped. An important thing to look at is the "done" parameter. This can be very useful when debugging.
+                    </aside>
                 </section>
 
                 <section>
@@ -174,6 +182,9 @@ function * evenNumbersStoppable() {
   Object {value: undefined, done: true}
                     </code></pre>
                     <p>Generators have a built in function for throwing errors and stopping itself.</p>
+                    <aside class="notes">
+                        This function stops the generator and properly throws an error after making try/catch the proper pattern for handling errors.
+                    </aside>
                 </section>
 
                 <section>
@@ -221,6 +232,9 @@ var get = async(function *(){
   return {left: yield left, right: yield right}
 })
                     </code></pre>
+                    <aside class="notes">
+                        Using the wrapper function we are able to yield the inner promises. This creates a much cleaner way of handling async tasks. These promises will also throw and error when they reject.
+                    </aside>
                 </section>
 
                 <section>
@@ -240,6 +254,9 @@ var get = async function (){
 }
                     </code></pre>
                     <p>Looking similar? There is a reason.</p>
+                    <aside class="notes">
+                        The reason async/await looks so similar is that it is actually using generators underneath.
+                    </aside>
                 </section>
                 
                 <section>
@@ -249,6 +266,9 @@ var get = async function (){
                         <li>Originally slated as a feature for ES2016, but was delayed.</li>
                         <li>Currently at Stage-3 of spec approval. Already supported by Chakra, so only one other vendor needs to support it to get it to Stage-4.</li>
                     </ul>
+                    <aside class="notes">
+                        Generators are already available in Node. Async/Await is not. You can get the benefits of it by using Babel, but there are people who are uncomfortable running there server code through Babel.
+                    </aside>
                 </section>
 
                 <section>
@@ -265,16 +285,25 @@ var get = async function (){
                     <h2>Migrating: From Express to Koa</h2>
                     <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-1.png" />
                     <p>Convert a normal middleware function to a generator.</p>
+                    <aside class="notes">
+                        The generator is still a bit ugly because I wanted to make this an iterative process. The important part is that the promise based logic is still there. We just ported the logic into a Koa endpoint.
+                    </aside>
                 </section>
                 <section>
                     <h2>Migrating: From then to yield</h2>
                     <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-2.png" />
                     <p>Looking much cleaner.</p>
+                    <aside class="notes">
+                        Now that we have gotten rid of the "then"s and started yielding all the promises, things are much easier to read.
+                    </aside>
                 </section>
                 <section>
                     <h2>Migrating: From yield to await</h2>
                     <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-3.png" />
                     <p>So Simple.</p>
+                    <aside class="notes">
+                        I feel like someone could write a series of regex expressions to automatically do this process. Think of all the glorious internet points.
+                    </aside>
                 </section>
 
                 <section>
