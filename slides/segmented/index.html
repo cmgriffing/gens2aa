@@ -311,6 +311,9 @@ var get = async function (){
                     <ul>
                         <li>Unable to be optimized by compiler.</li>
                     </ul>
+                    <aside class="notes">
+                        Generators cannot be optimized by the compiler. However, the underlying promises still can be. So, it is important to make sure that the generators are at the top level.
+                    </aside>
                 </section>
 
                 <section>
