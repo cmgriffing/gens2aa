@@ -157,8 +157,12 @@
                     <p>
                         <small>by <a href="http://chrisgriffing.com">Chris Griffing</a></small>
                     </p>
+                    <ul>
+                        <li>Github: <a href="https://github.com/cmgriffing">github.com/cmgriffing</a></li>
+                        <li>Twitter: <a href="https://twitter.com/cmgriffing">twitter.com/cmgriffing</a></li>
+                    </ul>
                     <aside class="notes">
-                        Im here today to talk about Generators and Async/Await, and how Koa gives you an easy migration path for using these new Javascript features.
+                        I'm here today to talk about Generators and Async/Await, and how Koa gives you an easy migration path for using these new Javascript features.
                     </aside>
                 </section>
 
@@ -192,9 +196,10 @@ Widgets.createWidgets(20, function (widgets) {
   })
 })
                         </code></pre>
-                        <p>This isn't the messiest example, but if you add in error checking it gets really ugly because you have to handle errors at every level of the chain.</p>
+                        <p>Not the messiest example</p>
                         <aside class="notes">
                             Im going to start where every other talk and article about generators and async/await starts. Callback Hell.
+                            This isn't the messiest example, but if you add in error checking, it gets really ugly because you have to handle errors at every level of the chain.
                         </aside>
 
                     </section>
@@ -268,7 +273,8 @@ async(function * (next) {
     let widgets = yield Widgets.createWidgets(20)
     let gadgets = yield Gadgets.createGadgetsFromWidgets(widgets)
     let things = yield Things.createThingsFromGadgets(gadgets)
-    return things
+    res.set('Content-Type', 'application/json')
+    res.send(JSON.stringify(things))
   } catch (e) {
     //handle errors
   }
