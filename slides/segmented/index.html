@@ -42,6 +42,106 @@
         <!--[if lt IE 9]>
         <script src="lib/js/html5shiv.js"></script>
         <![endif]-->
+
+        <script>
+            var res = {
+                set: function(header, value) {
+                    //console.log('set fired: ', header, value)
+                },
+                send: function(value) {
+                    //console.log('send fired: ', value)
+                }
+            }
+            Widgets = {}
+            Gadgets = {}
+            Things = {}
+            var setUpCallbacks = function() {
+                Widgets = {
+                    createWidgets: function(count, callback) {
+                        let widgets = []
+                        for(let i = 0; i < count; i++) {
+                          widgets.push({
+                            name: 'Widget ' + (i + 1)
+                          })
+                        }
+                        callback(widgets)
+                        //callback({error: 'Something went wrong'})
+                    }
+                  }
+                Gadgets = {
+                    createGadgetsFromWidgets: function(widgets, callback) {
+                        let gadgets = []
+                        for(let i = 0; i < widgets.length; i++) {
+                          gadgets.push({
+                            name: 'Gadget ' + (i + 1)
+                          })
+                        }
+                        callback(gadgets)
+                        //callback({error: 'Something went wrong'})
+                    }
+                  }
+                Things = {
+                    createThingsFromGadgets: function(gadgets, callback) {
+                        let things = []
+                        for(let i = 0; i < gadgets.length; i++) {
+                          things.push({
+                            name: 'Thing ' + (i + 1)
+                          });
+                        }
+                        callback(things)
+                        //callback({error: 'Something went wrong'})
+                    }
+                  }
+            }
+            setUpCallbacks()
+            var setUpPromises = function() {
+                Widgets = {
+                    createWidgets: function(count) {
+                      return new Promise(function(resolve, reject) {
+                        let widgets = []
+                        for(let i = 0; i < count; i++) {
+                          widgets.push({
+                            name: 'Widget ' + (i + 1)
+                          })
+                        }
+                        resolve(widgets)
+                        //reject({error: 'Something went wrong'})
+                      })
+                    }
+                  }
+                Gadgets = {
+                    createGadgetsFromWidgets: function(widgets) {
+                      return new Promise(function(resolve, reject) {
+                        let gadgets = []
+                        for(let i = 0; i < widgets.length; i++) {
+                          gadgets.push({
+                            name: 'Gadget ' + (i + 1)
+                          })
+                        }
+                        resolve(gadgets)
+                        //reject({error: 'Something went wrong'})
+                      })
+                    }
+                  }
+                Things = {
+                    createThingsFromGadgets: function(gadgets) {
+                      return new Promise(function(resolve, reject) {
+                        let things = []
+                        for(let i = 0; i < gadgets.length; i++) {
+                          things.push({
+                            name: 'Thing ' + (i + 1)
+                          })
+                        }
+                        resolve(things)
+                        //reject({error: 'Something went wrong'})
+                      })
+                    }
+                  }
+            }
+            //setUpPromises()
+        </script>
+
+
     </head>
 
     <body>
@@ -60,6 +160,12 @@
                     <aside class="notes">
                         Im here today to talk about Generators and Async/Await, and how Koa gives you an easy migration path for using these new Javascript features.
                     </aside>
+                </section>
+
+                <section>
+                    <h2>Warning!!!</h2>
+                    <p>No Semicolons.</p>
+                    <img src="images/standardjs.svg" height="200" width="200" />
                 </section>
 
                 <section>
@@ -87,22 +193,38 @@ Widgets.createWidgets(20, function(widgets) {
                     <section>
                         <h2>A Little Better</h2>
                         <pre><code>
-var thingsCallback = function(things) {
-    res.set('Content-Type', 'application/json')
-    res.send(JSON.stringify(things))
+Widgets.createWidgets(20, widgetsCallback)   
+                            
+function widgetsCallback(widgets) {
+    Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
 }
-var gadgetsCallback = function(gadgets) {
+function gadgetsCallback(gadgets) {
     Things.createThingsFromGadgets(gadgets, thingsCallback)
 }
 //res is available the wrapping Express endpoint
-var widgetsCallback = function(widgets) {
+function thingsCallback (things) {
+    res.set('Content-Type', 'application/json')
+    res.send(JSON.stringify(things))
+}
+                        </code></pre>
+                        <script>
+Widgets.createWidgets(20, widgetsCallback)   
+                            
+function widgetsCallback(widgets) {
     Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
 }
-Widgets.createWidgets(20, widgetsCallback)
-                        </code></pre>
-                        <p>Pretty verbose</p>
+function gadgetsCallback(gadgets) {
+    Things.createThingsFromGadgets(gadgets, thingsCallback)
+}
+//res is available the wrapping Express endpoint
+function thingsCallback (things) {
+    res.set('Content-Type', 'application/json')
+    res.send(JSON.stringify(things))
+}
+                        </script>
+                        <p>Flatter but harder to follow (arguably)</p>
                         <aside class="notes">
-                            Maybe named and hoisted functions would have been better, but still not great.
+
                         </aside>
                     </section>
 
@@ -123,7 +245,7 @@ Widgets.createWidgets(20)
     //handle errors
   })
                     </code></pre>
-                    <p>A bit messy but much better than nested callbacks.</p>
+                    <p>Much better </p>
                     <aside class="notes">
                         These are the contents of a simple Express endpoint. Here, we use promises to prevent "callback hell". This should be familiar to most developers and it really is much better than nested callbacks. It also gives us the option of having one `.catch()` call at the end to catch errors from the whole sequence. However, this type of async flow control can be made even cleaner using generators on top of promises.
                     </aside>
@@ -332,17 +454,69 @@ var get = async function (){
                         The reason async/await looks so similar is that it is actually using generators underneath.
                     </aside>
                 </section>
-                
                 <section>
-                    <h2>Async/Await</h2>
-                    <ul>
-                        <li>Uses wrapped generators for promise-based control flow.</li>
-                        <li>Originally slated as a feature for ES2016, but was delayed.</li>
-                        <li>Currently at Stage-3 of spec approval. Already supported by Chakra, so only one other vendor needs to support it to get it to Stage-4.</li>
-                    </ul>
-                    <aside class="notes">
-                        Generators are already available in Node. Async/Await is not. You can get the benefits of it by using Babel, but there are people who are uncomfortable running their server code through Babel.
-                    </aside>
+                    <section>
+                        <h2>Async/Await Coming Soon</h2>
+                        <ul>
+                            <li>Uses wrapped generators for promise-based control flow.</li>
+                            <li>Originally slated as a feature for ES2016, but was delayed.</li>
+                            <li>Currently at Stage-3 of spec approval. Already supported by Chakra (The Microsoft js engine), so only one other vendor needs to support it to get it to Stage-4.</li>
+                        </ul>
+                        <aside class="notes">
+                            Generators are already available in Node. Async/Await is not. You can get the benefits of it by using Babel, but there are people who are uncomfortable running their server code through Babel.
+                        </aside>
+                    </section>
+                    <section>
+                        <h2>The Spec</h2>
+                        <p>
+                            <a href="https://tc39.github.io/ecmascript-asyncawait/">https://tc39.github.io/ecmascript-asyncawait/</a>
+                        </p>
+                        <aside class="notes">
+                            4000 words, pretty hard to read through unless you know what you are looking for.
+                        </aside>
+                    </section>
+                    <section>
+                        <h2>Desugaring</h2>
+                        <pre><code>
+async function &lt;name&gt;?&lt;argumentlist&gt;&lt;body&gt;
+                        </code></pre>
+                        <pre><code>
+function &lt;name&gt;?&lt;argumentlist&gt;{ return spawn(function*() &lt;body&gt;, this); }
+                        </code></pre>
+                        <p>async desugars into a promise-wrapping generator.</p>
+                    </section>
+                    <section>
+                        <h2>Desugaring: *spawn</h2>
+                        <pre><code>
+function spawn(genF, self) {
+    return new Promise(function(resolve, reject) {
+        var gen = genF.call(self);
+        function step(nextF) {
+            var next;
+            try {
+                next = nextF();
+            } catch(e) {
+                // finished with failure, reject the promise
+                reject(e);
+                return;
+            }
+            if(next.done) {
+                // finished with success, resolve the promise
+                resolve(next.value);
+                return;
+            }
+            // not finished, chain off the yielded promise and `step` again
+            Promise.resolve(next.value).then(function(v) {
+                step(function() { return gen.next(v); });
+            }, function(e) {
+                step(function() { return gen.throw(e); });
+            });
+        }
+        step(function() { return gen.next(undefined); });
+    });
+}
+                        </code></pre>
+                    </section>
                 </section>
 
                 <section>
