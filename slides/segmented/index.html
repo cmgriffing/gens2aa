@@ -398,6 +398,7 @@ function * evenNumbersStoppable () {
                 <section>
                     <h2>Generators (wrapping promises)</h2>
                     <pre><code>
+// copied from: https://www.promisejs.org/generators/
 function async (makeGenerator){
   return function () {
     var generator = makeGenerator.apply(this, arguments)
