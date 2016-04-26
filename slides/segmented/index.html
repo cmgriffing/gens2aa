@@ -169,14 +169,23 @@
                 </section>
 
                 <section>
+                    <h2>Aimed at Node.js</h2>
+                    <p>On the client-side, just use Babel.</p>
+                    <p>Server-side debugging with source maps is tricky according to some and fine according to others.</p>
+                    <aside class="notes">
+                        Even if development debugging is fine, surely log files become harder to read. Maybe not. I just don't know and I'm not really willing to find out right now.
+                    </aside>
+                </section>
+
+                <section>
 
                     <section>
                         
                         <h2>Callback Hell</h2>
                         <pre><code>
-Widgets.createWidgets(20, function(widgets) {
-  Gadgets.createGadgetsFromWidgets(widgets, function(gadgets) {
-    Things.createThingsFromGadgets(gadgets, function(things) {
+Widgets.createWidgets(20, function (widgets) {
+  Gadgets.createGadgetsFromWidgets(widgets, function (gadgets) {
+    Things.createThingsFromGadgets(gadgets, function (things) {
       res.set('Content-Type', 'application/json')
       res.send(JSON.stringify(things))
     })
@@ -185,7 +194,7 @@ Widgets.createWidgets(20, function(widgets) {
                         </code></pre>
                         <p>This isn't the messiest example, but if you add in error checking it gets really ugly because you have to handle errors at every level of the chain.</p>
                         <aside class="notes">
-                            You can flatten this out by using named functions or function expressions.
+                            Im going to start where every other talk and article about generators and async/await starts. Callback Hell.
                         </aside>
 
                     </section>
@@ -195,36 +204,36 @@ Widgets.createWidgets(20, function(widgets) {
                         <pre><code>
 Widgets.createWidgets(20, widgetsCallback)   
                             
-function widgetsCallback(widgets) {
-    Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
+function widgetsCallback (widgets) {
+  Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
 }
-function gadgetsCallback(gadgets) {
-    Things.createThingsFromGadgets(gadgets, thingsCallback)
+function gadgetsCallback (gadgets) {
+  Things.createThingsFromGadgets(gadgets, thingsCallback)
 }
-//res is available the wrapping Express endpoint
+//res is available from the Express.js server endpoint
 function thingsCallback (things) {
-    res.set('Content-Type', 'application/json')
-    res.send(JSON.stringify(things))
+  res.set('Content-Type', 'application/json')
+  res.send(JSON.stringify(things))
 }
                         </code></pre>
                         <script>
 Widgets.createWidgets(20, widgetsCallback)   
                             
-function widgetsCallback(widgets) {
-    Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
+function widgetsCallback (widgets) {
+  Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
 }
-function gadgetsCallback(gadgets) {
-    Things.createThingsFromGadgets(gadgets, thingsCallback)
+function gadgetsCallback (gadgets) {
+  Things.createThingsFromGadgets(gadgets, thingsCallback)
 }
 //res is available the wrapping Express endpoint
 function thingsCallback (things) {
-    res.set('Content-Type', 'application/json')
-    res.send(JSON.stringify(things))
+  res.set('Content-Type', 'application/json')
+  res.send(JSON.stringify(things))
 }
                         </script>
                         <p>Flatter but harder to follow (arguably)</p>
                         <aside class="notes">
-
+                            You can flatten this out by using named functions or function expressions.
                         </aside>
                     </section>
 
@@ -241,7 +250,7 @@ Widgets.createWidgets(20)
   }).then(function (things) {
     res.set('Content-Type', 'application/json')
     res.send(JSON.stringify(things))
-  }).catch(function(error) {
+  }).catch(function (error) {
     //handle errors
   })
                     </code></pre>
@@ -274,7 +283,7 @@ async(function * (next) {
                 <section>
                     <h2>Generators: Basics</h2>
                     <pre class="half"><code>
-function * evenNumbers() {
+function * evenNumbers () {
   for(var i = 1; true; i++) {
     if(i % 2 === 0) {
       yield i
@@ -297,7 +306,7 @@ function * evenNumbers() {
   Object {value: 10, done: false}
                     </code></pre>
                     <script>
-                        function * evenNumbers() {
+                        function * evenNumbers () {
                             for(var i = 1; true; i++) {
                                 if(i % 2 === 0) {
                                     yield i
@@ -313,7 +322,7 @@ function * evenNumbers() {
                 <section>
                     <h2>Generators (stoppable)</h2>
                     <pre class="half">Definition:<code>
-function * evenNumbersStoppable() {
+function * evenNumbersStoppable () {
   for(var i = 1; true; i++) {
     if(i % 2 === 0) {
       var stop = yield i
@@ -376,18 +385,18 @@ function * evenNumbersStoppable() {
                     </code></pre>
                     <p>Generators have a built in function for throwing errors and stopping itself.</p>
                     <aside class="notes">
-                        This function stops the generator and properly throws an error afterwards which makes try/catch the proper pattern for handling errors.
+                        This function stops the generator and properly throws an error afterwards which makes try/catch the pattern for handling errors.
                     </aside>
                 </section>
 
                 <section>
                     <h2>Generators (wrapping promises)</h2>
                     <pre><code>
-function async(makeGenerator){
+function async (makeGenerator){
   return function () {
     var generator = makeGenerator.apply(this, arguments)
 
-    function handle(result){
+    function handle (result){
       // result => { done: [Boolean], value: [Object] }
       if (result.done) return Promise.resolve(result.value)
 
@@ -415,14 +424,14 @@ function async(makeGenerator){
                 <section>
                     <h2>Generators (wrapping promises): examples</h2>
                     <pre>A Sequence of Operations:<code>
-var get = async(function *(){
+var get = async(function * (){
   var left = yield readJSON('left.json')
   var right = yield readJSON('right.json')
   return {left: left, right: right}
 })
                     </code></pre>
                     <pre>Parallel Operations:<code>
-var get = async(function *(){
+var get = async(function * (){
   var left = readJSON('left.json')
   var right = readJSON('right.json')
   return {left: yield left, right: yield right}
@@ -483,7 +492,7 @@ async function &lt;name&gt;?&lt;argumentlist&gt;&lt;body&gt;
                         <pre><code>
 function &lt;name&gt;?&lt;argumentlist&gt;{ return spawn(function*() &lt;body&gt;, this); }
                         </code></pre>
-                        <p>async desugars into a promise-wrapping generator.</p>
+                        <p>async desugars into a promise handling wrapped generator.</p>
                     </section>
                     <section>
                         <h2>Desugaring: *spawn</h2>
