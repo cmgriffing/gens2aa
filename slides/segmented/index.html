@@ -182,6 +182,9 @@
                     <h2>Warning!!!</h2>
                     <p>No Semicolons.</p>
                     <img src="images/standardjs.svg" height="200" width="200" />
+                    <aside class="notes">
+                      I don't have much of an opinion about them either way. I just wanted to use a somewhat standard formatter along the same lines as the rustfmt for gofmt tools for Rust and Golang, respectively. ESLint can do the same thing, but it relies on someone deciding what rules to enforce.
+                    </aside>
                 </section>
 
                 <section>
@@ -199,11 +202,13 @@
                         
                         <h2>Callback Hell</h2>
                         <pre><code>
-Widgets.createWidgets(20, function (widgets) {
-  Gadgets.createGadgetsFromWidgets(widgets, function (gadgets) {
-    Things.createThingsFromGadgets(gadgets, function (things) {
-      res.set('Content-Type', 'application/json')
-      res.send(JSON.stringify(things))
+app.get('/', function (req, res) {
+  Widgets.createWidgets(20, function (widgets) {
+    Gadgets.createGadgetsFromWidgets(widgets, function (gadgets) {
+      Things.createThingsFromGadgets(gadgets, function (things) {
+        res.set('Content-Type', 'application/json')
+        res.send(JSON.stringify(things))
+      })
     })
   })
 })
@@ -219,19 +224,22 @@ Widgets.createWidgets(20, function (widgets) {
                     <section>
                         <h2>A Little Better</h2>
                         <pre><code>
-Widgets.createWidgets(20, widgetsCallback)   
-                            
-function widgetsCallback (widgets) {
-  Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
-}
-function gadgetsCallback (gadgets) {
-  Things.createThingsFromGadgets(gadgets, thingsCallback)
-}
-//res is available from the Express.js server endpoint
-function thingsCallback (things) {
-  res.set('Content-Type', 'application/json')
-  res.send(JSON.stringify(things))
-}
+
+app.get('/', function (req, res) {
+  Widgets.createWidgets(20, widgetsCallback)   
+                              
+  function widgetsCallback (widgets) {
+    Gadgets.createGadgetsFromWidgets(widgets, gadgetsCallback)
+  }
+  function gadgetsCallback (gadgets) {
+    Things.createThingsFromGadgets(gadgets, thingsCallback)
+  }
+  //res is available from the Express.js server endpoint
+  function thingsCallback (things) {
+    res.set('Content-Type', 'application/json')
+    res.send(JSON.stringify(things))
+  }
+})
                         </code></pre>
                         <script>
 Widgets.createWidgets(20, widgetsCallback)   
@@ -259,17 +267,19 @@ function thingsCallback (things) {
                 <section>
                     <h2>Long Promise Chains</h2>
                     <pre><code>
-Widgets.createWidgets(20)
-  .then(function (widgets) {
-    return Gadgets.createGadgetsFromWidgets(widgets)
-  }).then(function (gadgets) {
-    return Things.createThingsFromGadgets(gadgets)
-  }).then(function (things) {
-    res.set('Content-Type', 'application/json')
-    res.send(JSON.stringify(things))
-  }).catch(function (error) {
-    //handle errors
-  })
+app.get('/', function (req, res) {
+  Widgets.createWidgets(20)
+    .then(function (widgets) {
+      return Gadgets.createGadgetsFromWidgets(widgets)
+    }).then(function (gadgets) {
+      return Things.createThingsFromGadgets(gadgets)
+    }).then(function (things) {
+      res.set('Content-Type', 'application/json')
+      res.send(JSON.stringify(things))
+    }).catch(function (error) {
+      //handle errors
+    })
+})
                     </code></pre>
                     <p>Much better </p>
                     <aside class="notes">
@@ -281,8 +291,8 @@ Widgets.createWidgets(20)
 
                     <section>
 
-                        <h2>Generators: Quick Example</h2>
-                        <pre><code data-noescape>
+                        <h2>Generators: Quick Example of an Express endpoint with a Generator</h2>
+                        <pre><code>
 app.get('/', function (req, res) {
   async(function * (next) {
     try {
@@ -436,10 +446,17 @@ function * evenNumbersStoppable () {
                 <section>
                     <h2>Generators (wrapping promises)</h2>
                     <pre><code>
-// copied from: https://www.promisejs.org/generators/
+// copied (and lightly modified) from: https://www.promisejs.org/generators/
 function async (makeGenerator){
   return function () {
+    //start the generator function
     var generator = makeGenerator.apply(this, arguments)
+    
+    try {
+      return handle(generator.next())
+    } catch (ex) {
+      return Promise.reject(ex)
+    }
 
     function handle (result){
       // result => { done: [Boolean], value: [Object] }
@@ -450,12 +467,6 @@ function async (makeGenerator){
       }, function (err){
         return handle(generator.throw(err))
       });
-    }
-
-    try {
-      return handle(generator.next())
-    } catch (ex) {
-      return Promise.reject(ex)
     }
   }
 }
@@ -580,6 +591,9 @@ function spawn(genF, self) {
                         <li>Middleware is already wrapped to support easy promise-based generator flows.</li>
                         <li>Koa2 beta is stable, ready, and waiting for async/await support in Node.</li>
                     </ul>
+                    <aside class="notes">
+                      You can definitely use generators and async/await inside of Express, the main difference is that all middleware for koa already supports these things. With Express you end up having to shoehorn the generator and async/await functionality into your application.
+                    </aside>
                 </section>
 
 
