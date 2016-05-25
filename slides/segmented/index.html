@@ -631,14 +631,15 @@ function spawn(genF, self) {
                   </ul>
                   <p>Much more info about Koa on the wiki on Github: <a href="https://github.com/koajs/koa/wiki">https://github.com/koajs/koa/wiki</a></p>
                   <aside class="notes">
-                    The Koa wiki lists many popular repo that have something to do with Koa in one way or another.
+                    <p>The Koa wiki lists many popular repo that have something to do with Koa in one way or another.</p>
+                    <p>HTTP2 for Nginx was open sourced by Cloudflare a couple weeks ago.</p>
                   </aside>
                 </section>
 
                 <section>
                     <h2>Caveats</h2>
                     <ul>
-                        <li>Unable to be optimized by compiler.</li>
+                        <li>Generators and async/await are currently unable to be optimized by compiler.</li>
                         <li>Many plugins and middleware are not ready for Koa 2.0.</li>
                         <li class="indented-li">Koa1 middleware can be wrapped with koa-convert.</li>
                         <li class="indented-li">koa-websocket, koa-stream, and similar libraries work differently than standard middleware so koa-connect is unlikely to work for that functionality.</li>
