@@ -37,6 +37,18 @@
                 vertical-align: top;
             }
 
+            mark, mark .hljs-keyword {
+                color: #000 !important;
+            }
+
+            .fragment.visible {
+                opacity: 0.5 !important;
+            }
+
+            .fragment.visible.current-fragment {
+                opacity: 1.0 !important;
+            }
+
         </style>
 
         <!--[if lt IE 9]>
@@ -174,7 +186,7 @@
 
                 <section>
                     <h2>Aimed at Node.js</h2>
-                    <p>On the client-side, just use Babel.</p>
+                    <p>On the client-side, just use Babel for cross-browser compatibility.</p>
                     <p>Server-side debugging with source maps is tricky according to some and fine according to others.</p>
                     <aside class="notes">
                         Even if development debugging is fine, surely log files become harder to read. Maybe not. I just don't know and I'm not really willing to find out right now.
@@ -266,24 +278,50 @@ Widgets.createWidgets(20)
                 </section>
 
                 <section>
-                    <h2>Generators: Quick Example</h2>
-                    <pre><code>
-async(function * (next) {
-  try {
-    let widgets = yield Widgets.createWidgets(20)
-    let gadgets = yield Gadgets.createGadgetsFromWidgets(widgets)
-    let things = yield Things.createThingsFromGadgets(gadgets)
-    res.set('Content-Type', 'application/json')
-    res.send(JSON.stringify(things))
-  } catch (e) {
-    //handle errors
-  }
+
+                    <section>
+
+                        <h2>Generators: Quick Example</h2>
+                        <pre><code data-noescape>
+app.get('/', function (req, res) {
+  async(function * (next) {
+    try {
+      let widgets = yield Widgets.createWidgets(20)
+      let gadgets = yield Gadgets.createGadgetsFromWidgets(widgets)
+      let things = yield Things.createThingsFromGadgets(gadgets)
+      res.set('Content-Type', 'application/json')
+      res.send(JSON.stringify(things))
+    } catch (e) {
+      //handle errors
+    }
+  })
 })
-                    </code></pre>
-                    <p>This lets us yield each promise in a synchronous fashion without blocking the thread from executing other code.</p>
-                    <aside class="notes">
-                        As a quick example, here is what the code might look like using a specialized wrapper for generators.
-                    </aside>
+                        </code></pre>
+                        <p>This lets us yield each promise in a synchronous fashion without blocking the thread from executing other code.</p>
+                        <aside class="notes">
+                            As a quick example, here is what the code might look like using a specialized wrapper for generators.
+                        </aside>
+                    </section>
+                    <section>
+                        <h2>Generators explained</h2>
+                        <pre><code data-noescape>
+<span class="fragment">app.get('/', function (req, res) {
+  <mark>async</mark>(function <mark>*</mark> (next) {</span>
+  <span class="fragment">  try {
+      let widgets = <mark>yield</mark> Widgets.createWidgets(20)
+      let gadgets = yield Gadgets.createGadgetsFromWidgets(widgets)
+      let things = yield Things.createThingsFromGadgets(gadgets)
+      res.set('Content-Type', 'application/json')
+      res.send(JSON.stringify(things))
+    } catch (e) {
+      //handle errors
+    }
+  })
+})</span>
+
+                        </code></pre>
+                    </section>
+
                 </section>
                 
                 <section>
@@ -564,20 +602,44 @@ function spawn(genF, self) {
                 <section>
                     <h2>Migrating: From yield to await</h2>
                     <img src="images/diffs/side-by-side/Computed_Diff_-_Diff_Checker-3.png" />
-                    <p>So Simple.</p>
+                    <p>So Simple. This part of the process could probably even be automated.</p>
                     <aside class="notes">
                         I feel like someone could write a series of regex expressions to automatically do this process. Think of all the glorious internet points.
                     </aside>
                 </section>
 
                 <section>
-                    <h2>Caveat</h2>
+                  <h2>More about Koa.js</h2>
+                  <p>It is low level like Express.</p>
+                  <ul>Frameworks and wrappers for more functionality:
+                    <li>Strapi - <a href="http://strapi.io">http://strapi.io</a> - Full-featured (users/permissions, GraphQL support and much more). Uses Waterline ORM. Has a Studio GUI similar to Loopback.</li>
+                    <li>[On Hold/Alpha]Koala - <a href="https://github.com/koajs/koala">https://github.com/koajs/koala</a> - A wrapper for Koa with HTTP2 support, JSONP, Response caching, and more. On hold and waiting for more general underlying HTTP2 support like from Nginx.</li>
+                  </ul>
+                  <p>Much more info about Koa on the wiki on Github: <a href="https://github.com/koajs/koa/wiki">https://github.com/koajs/koa/wiki</a></p>
+                  <aside class="notes">
+                    The Koa wiki lists many popular repo that have something to do with Koa in one way or another.
+                  </aside>
+                </section>
+
+                <section>
+                    <h2>Caveats</h2>
                     <ul>
                         <li>Unable to be optimized by compiler.</li>
+                        <li>Many plugins and middleware are not ready for Koa 2.0.</li>
+                        <li class="indented-li">Koa1 middleware can be wrapped with koa-convert.</li>
+                        <li class="indented-li">koa-websocket, koa-stream, and similar libraries work differently than standard middleware so koa-connect is unlikely to work for that functionality.</li>
                     </ul>
                     <aside class="notes">
-                        Generators cannot be optimized by the compiler. However, the underlying promises still can be. So, it is important to make sure that the generators are at the top level.
+                        <p>Generators cannot be optimized by the compiler. However, the underlying promises still can be. So, it is important to make sure that the generators are at the top level.</p>
+                        <p>Looking at just the wiki you can see that many modules do not support Koa2 yet.</p>
+                        <p>Koa-convert is a piece of middle ware that wraps other middleware and does some binding to support the Koa2 'ctx' argument as 'this' inside of koa1 middleware.</p>
+                        <p>The porting process from koa1 to koa2 should be that hard for some of these libraries, and it might be a fun weekend project for someone to try and implement (wink wink nudge nudge)</p>
                     </aside>
+                </section>
+
+                <section>
+                  <h2>Wink, Wink, Nudge, Nudge</h2>
+                  <img src="images/winkwink.gif" />
                 </section>
 
                 <section>
